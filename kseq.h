@@ -157,6 +157,8 @@ typedef struct __kstring_t {
 	{																	\
 		kseq_t *s = (kseq_t*)calloc(1, sizeof(kseq_t));					\
 		s->f = ks_init(fd);												\
+		s->limit = 0;													\
+		s->num_seqs = 0;												\
 		return s;														\
 	}																	\
 	SCOPE void kseq_destroy(kseq_t *ks)									\
@@ -176,6 +178,9 @@ typedef struct __kstring_t {
 	SCOPE int kseq_read(kseq_t *seq) \
 	{ \
 		int c; \
+		if (seq->limit > 0 && seq->num_seqs >= seq->limit) {\
+			return -1; /* reached seq read limit */\
+		}\
 		kstream_t *ks = seq->f; \
 		if (seq->last_char == 0) { /* then jump to the next header line */ \
 			while ((c = ks_getc(ks)) != -1 && c != '>' && c != '@'); \
@@ -201,7 +206,7 @@ typedef struct __kstring_t {
 			seq->seq.s = (char*)realloc(seq->seq.s, seq->seq.m); \
 		} \
 		seq->seq.s[seq->seq.l] = 0;	/* null terminated string */ \
-		if (c != '+') return seq->seq.l; /* FASTA */ \
+		if (c != '+')  { seq->num_seqs++; return seq->seq.l; } /* FASTA */ \
 		if (seq->qual.m < seq->seq.m) {	/* allocate memory for qual in case insufficient */ \
 			seq->qual.m = seq->seq.m; \
 			seq->qual.s = (char*)realloc(seq->qual.s, seq->qual.m); \
@@ -211,13 +216,31 @@ typedef struct __kstring_t {
 		while (ks_getuntil2(ks, KS_SEP_LINE, &seq->qual, 0, 1) >= 0 && seq->qual.l < seq->seq.l); \
 		seq->last_char = 0;	/* we have not come to the next header line */ \
 		if (seq->seq.l != seq->qual.l) return -2; /* error: qual string is of a different length */ \
+		seq->num_seqs++; \
 		return seq->seq.l; \
+	}
+
+#define __KSEQ_OFFSET_LIMIT(SCOPE, type_t)								\
+	SCOPE kseq_t *kseq_init_w_offset_limit(type_t fd, int offset, int limit)	\
+	{																	\
+		kseq_t *s = (kseq_t*)calloc(1, sizeof(kseq_t));					\
+		s->f = ks_init(fd);												\
+		s->num_seqs = 0;												\
+		s->limit = offset;												\
+		while ((kseq_read(s) > 0)){										\
+																		\
+		}																\
+		s->num_seqs = 0;												\
+		s->limit = limit;												\
+		return s;														\
 	}
 
 #define __KSEQ_TYPE(type_t)						\
 	typedef struct {							\
 		kstring_t name, comment, seq, qual;		\
 		int last_char;							\
+		int num_seqs;							\
+		int limit;								\
 		kstream_t *f;							\
 	} kseq_t;
 
@@ -225,7 +248,8 @@ typedef struct __kstring_t {
 	KSTREAM_INIT(type_t, __read, 16384)			\
 	__KSEQ_TYPE(type_t)							\
 	__KSEQ_BASIC(SCOPE, type_t)					\
-	__KSEQ_READ(SCOPE)
+	__KSEQ_READ(SCOPE)							\
+	__KSEQ_OFFSET_LIMIT(SCOPE, type_t)
 
 #define KSEQ_INIT(type_t, __read) KSEQ_INIT2(static, type_t, __read)
 
@@ -233,6 +257,7 @@ typedef struct __kstring_t {
 	__KS_TYPE(type_t) \
 	__KSEQ_TYPE(type_t) \
 	extern kseq_t *kseq_init(type_t fd); \
+	extern kseq_t *kseq_init_w_offset_limit(type_t fd, int offset, int limit); \
 	void kseq_destroy(kseq_t *ks); \
 	int kseq_read(kseq_t *seq);
 
