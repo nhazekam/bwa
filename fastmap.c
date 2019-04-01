@@ -123,7 +123,7 @@ int main_mem(int argc, char *argv[])
 	void *ko = 0, *ko2 = 0;
 	mem_pestat_t pes[4];
 	ktp_aux_t aux;
-	int byte_offset = 0;
+	long byte_offset = 0;
 	int seq_offset = 0;
 	int seq_limit = 0;
 	int skip_header = 0;
@@ -158,7 +158,7 @@ int main_mem(int argc, char *argv[])
 		else if (c == 'd') opt->zdrop = atoi(optarg), opt0.zdrop = 1;
 		else if (c == 'v') bwa_verbose = atoi(optarg);
 		else if (c == 'j') ignore_alt = 1;
-		else if (c == 'e') byte_offset = atoi(optarg);
+		else if (c == 'e') byte_offset = atol(optarg);
 		else if (c == 'J') seq_offset = atoi(optarg);
 		else if (c == 'l') seq_limit = atoi(optarg);
 		else if (c == 'g') skip_header = 1;
@@ -349,6 +349,7 @@ int main_mem(int argc, char *argv[])
 	}
 	fp = gzdopen(fd, "r");
 	if (byte_offset > 0) {
+		fprintf(stderr, "[SEEK::%d] Seek to location in input\n", byte_offset);
 		gzseek(fp,  byte_offset, SEEK_SET);
 	}
 	if (seq_offset > 0 || seq_limit > 0) {
