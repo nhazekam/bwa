@@ -123,6 +123,7 @@ int main_mem(int argc, char *argv[])
 	void *ko = 0, *ko2 = 0;
 	mem_pestat_t pes[4];
 	ktp_aux_t aux;
+	int byte_offset = 0;
 	int seq_offset = 0;
 	int seq_limit = 0;
 	int skip_header = 0;
@@ -133,7 +134,7 @@ int main_mem(int argc, char *argv[])
 
 	aux.opt = opt = mem_opt_init();
 	memset(&opt0, 0, sizeof(mem_opt_t));
-	while ((c = getopt(argc, argv, "51qpaMCSPVYjuk:c:v:s:r:t:R:A:B:O:E:U:w:L:d:T:Q:D:m:I:N:o:f:W:x:G:h:y:K:X:H:J:l:d")) >= 0) {
+	while ((c = getopt(argc, argv, "51qpaMCSPVYjuk:c:v:s:r:t:R:A:B:O:E:U:w:L:d:T:Q:D:m:I:N:o:f:W:x:G:h:y:K:X:H:J:l:e:g")) >= 0) {
 		if (c == 'k') opt->min_seed_len = atoi(optarg), opt0.min_seed_len = 1;
 		else if (c == '1') no_mt_io = 1;
 		else if (c == 'x') mode = optarg;
@@ -157,9 +158,10 @@ int main_mem(int argc, char *argv[])
 		else if (c == 'd') opt->zdrop = atoi(optarg), opt0.zdrop = 1;
 		else if (c == 'v') bwa_verbose = atoi(optarg);
 		else if (c == 'j') ignore_alt = 1;
+		else if (c == 'e') byte_offset = atoi(optarg);
 		else if (c == 'J') seq_offset = atoi(optarg);
 		else if (c == 'l') seq_limit = atoi(optarg);
-		else if (c == 'd') skip_header = 1;
+		else if (c == 'g') skip_header = 1;
 		else if (c == 'r') opt->split_factor = atof(optarg), opt0.split_factor = 1.;
 		else if (c == 'D') opt->drop_ratio = atof(optarg), opt0.drop_ratio = 1.;
 		else if (c == 'm') opt->max_matesw = atoi(optarg), opt0.max_matesw = 1;
@@ -346,6 +348,9 @@ int main_mem(int argc, char *argv[])
 		return 1;
 	}
 	fp = gzdopen(fd, "r");
+	if (byte_offset > 0) {
+		gzseek(fp,  byte_offset, SEEK_SET);
+	}
 	if (seq_offset > 0 || seq_limit > 0) {
 		aux.ks = kseq_init_w_offset_limit(fp, seq_offset, seq_limit);
 	} else {
