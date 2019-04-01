@@ -225,13 +225,11 @@ typedef struct __kstring_t {
 	{																	\
 		kseq_t *s = (kseq_t*)calloc(1, sizeof(kseq_t));					\
 		s->f = ks_init(fd);												\
-		fprintf(stderr, "[LOC::%d] \n", gztell(fd));					\
 		if (offset > 0) {												\
 			s->num_seqs = 0;											\
 			s->limit = offset;											\
 			while ((kseq_read(s) > 0)){}								\
 		}																\
-		fprintf(stderr, "[LOC::%d] \n", gztell(fd));					\
 		s->num_seqs = 0;												\
 		s->limit = limit;												\
 		return s;														\

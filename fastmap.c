@@ -349,7 +349,7 @@ int main_mem(int argc, char *argv[])
 	}
 	fp = gzdopen(fd, "r");
 	if (byte_offset > 0) {
-		fprintf(stderr, "[SEEK::%d] Seek to location in input\n", byte_offset);
+		fprintf(stderr, "[SEEK::%ld] Seek to location in input\n", byte_offset);
 		gzseek(fp,  byte_offset, SEEK_SET);
 	}
 	if (seq_offset > 0 || seq_limit > 0) {
