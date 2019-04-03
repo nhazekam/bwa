@@ -347,11 +347,11 @@ int main_mem(int argc, char *argv[])
 		if (bwa_verbose >= 1) fprintf(stderr, "[E::%s] fail to open file `%s'.\n", __func__, argv[optind + 1]);
 		return 1;
 	}
-	fp = gzdopen(fd, "r");
 	if (byte_offset > 0) {
 		fprintf(stderr, "[SEEK::%ld] Seek to location in input\n", byte_offset);
-		gzseek(fp,  byte_offset, SEEK_SET);
+		lseek(fd,  byte_offset, SEEK_SET);
 	}
+	fp = gzdopen(fd, "r");
 	if (seq_offset > 0 || seq_limit > 0) {
 		aux.ks = kseq_init_w_offset_limit(fp, seq_offset, seq_limit);
 	} else {
